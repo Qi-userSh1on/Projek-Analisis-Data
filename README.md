@@ -13,6 +13,7 @@ pipenv install
 pip install streamlit babel
 pip install streamlit pandas matplotlib seaborn'
 pipenv shell
+python3 -m pip install streamlit --upgrade
 pip install -r requirements.txt
 ```
 
