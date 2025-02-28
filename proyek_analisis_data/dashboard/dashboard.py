@@ -1,0 +1,78 @@
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set(style='dark')
+
+st.write(
+    """
+    # Proyek Analisis Data
+    By: Qianna Vassaputri MS-08
+    """
+)
+
+day_df = pd.read_csv('dashboard/day_cleaned.csv')
+hour_df = pd.read_csv('dashboard/hour_cleaned.csv')
+
+day_df['dteday'] = pd.to_datetime(day_df['dteday'])
+hour_df['dteday'] = pd.to_datetime(hour_df['dteday'])
+
+with st.sidebar:
+    
+    st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png")
+    
+    min_date = day_df['dteday'].min()
+    max_date = day_df['dteday'].max()
+    
+    start_date, end_date = st.date_input(
+    label='Rentang Waktu',
+    min_value=min_date,
+    max_value=max_date,
+    value=[min_date, max_date]
+    )
+
+day_df = day_df[(day_df['dteday'] >= pd.to_datetime(start_date)) &
+                (day_df['dteday'] <= pd.to_datetime(end_date))]
+hour_df = hour_df[(hour_df['dteday'] >= pd.to_datetime(start_date)) &
+                  (hour_df['dteday'] <= pd.to_datetime(end_date))]
+
+# Pertanyaan ke-1
+st.write("***1. Musim manakah yang memiliki peningkatan pada penyewaan sepeda?***")
+
+byseason = hour_df.groupby("season")["cnt"].sum().sort_values(ascending=False).reset_index()
+
+season_names = {1: "Musim semi", 2: "Musim panas", 3: "Musim gugur", 4: "Musim dingin"}
+byseason["season"] = byseason["season"].map(season_names)
+
+colors = ["#645CAA", "#BFACE0", "#BFACE0", "#BFACE0"]
+
+plt.figure(figsize=(10, 5))
+sns.barplot(y="cnt", x="season", data=byseason, palette=colors)
+plt.title("Pengguna Sepeda Berdasarkan Musim", loc="center", fontsize=15)
+plt.ylabel("Total Pengguna")
+plt.xlabel("Musim")
+plt.ticklabel_format(style='plain', axis='y')
+
+st.pyplot(plt.gcf())
+
+# Pertanyaan ke-2
+st.write("***2. Bagaimana rata-rata penurunan penyewaan sepeda dalam tiap minggu?***")
+
+day_df["weekday"] = day_df["dteday"].dt.weekday
+
+# Rata-rata penyewaan per-hari dalam per-minggu
+weekday_avg = day_df.groupby("weekday")["cnt"].mean()
+day_labels = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+
+plt.figure(figsize=(10, 5))
+plt.plot(weekday_avg.index, weekday_avg.values, marker="o", linestyle="-", color="#4d4686", alpha=0.6)
+plt.xlabel("Hari dalam Seminggu (0 = Senin, 6 = Minggu)")
+plt.ylabel("Rata-rata Penyewaan")
+plt.title("Rata-rata Penyewaan Sepeda per Hari dalam Seminggu")
+plt.xticks(ticks=range(7), labels=day_labels)
+plt.grid(True)
+plt.legend(["Hari dalam Seminggu (0 = Senin, 6 = Minggu)"])
+
+st.pyplot(plt.gcf())
+
